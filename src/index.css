@@ -1,0 +1,28 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0a0a1a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", sans-serif;
+  color: white;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+svg {
+  fill: currentColor;
+  color: white;
+}
+
+/* hide all scrollbars */
+::-webkit-scrollbar {
+  display: none;
+}

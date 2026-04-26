@@ -1,0 +1,214 @@
+/* ==========================================
+   MOBILE CONTAINER
+   ========================================== */
+.mobile-container {
+  width: 390px;
+  height: 844px;
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  border-radius: 40px;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.5);
+  /* Background image directly on container — 
+     no child divs, no stacking context barriers */
+  background-image: url('./assets/bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #1a1aaa;
+}
+
+@media (max-width: 430px) {
+  .mobile-container {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+/* ==========================================
+   ICON BUTTONS
+   ========================================== */
+.nav-icon-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 100ms ease, opacity 200ms ease;
+  opacity: 0.55;
+  width: 30px;
+  height: 30px;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.nav-icon-button svg {
+  width: 24px;
+  height: 24px;
+  fill: white;
+  color: white;
+  transition: all 200ms ease;
+}
+
+.nav-icon-button.active {
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.nav-icon-button.active svg {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
+}
+
+.nav-icon-button:active {
+  transform: scale(0.85);
+}
+
+/* ==========================================
+   FLUID NAV WRAPPER — pointer capture layer
+   (NO z-index, NO transform, NO filter — 
+   keeps backdrop-filter working on children)
+   ========================================== */
+.fluid-nav-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ==========================================
+   FLUID NAV — the draggable element
+   (NO transform on this level either)
+   ========================================== */
+.fluid-nav {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  animation: navEntrance 500ms ease-out 200ms both;
+}
+
+@keyframes navEntrance {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ==========================================
+   DOCK POSITIONS
+   (Use left+right+margin:auto instead of 
+    translateX(-50%) to avoid transform)
+   ========================================== */
+.fluid-nav--bottom {
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+}
+
+.fluid-nav--left {
+  left: 16px;
+  bottom: 120px;
+}
+
+.fluid-nav--right {
+  right: 16px;
+  bottom: 120px;
+}
+
+/* ==========================================
+   INTERACTION STATES
+   ========================================== */
+.fluid-nav--activated .glass-pill {
+  box-shadow: 
+    0 0 40px rgba(255, 255, 255, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================
+   GLASS PILL — real glassmorphism
+   ========================================== */
+.glass-pill {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(50px) saturate(180%) brightness(1.1);
+  -webkit-backdrop-filter: blur(50px) saturate(180%) brightness(1.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+/* Horizontal pill (bottom) */
+.glass-pill--horizontal {
+  padding: 14px 28px;
+}
+
+/* Vertical pill (left/right) */
+.glass-pill--vertical {
+  padding: 18px 14px;
+}
+
+/* ==========================================
+   ICON LAYOUT INSIDE PILL
+   ========================================== */
+.glass-pill__icons {
+  display: flex;
+  align-items: center;
+}
+
+.glass-pill__icons--horizontal {
+  flex-direction: row;
+  gap: 28px;
+}
+
+.glass-pill__icons--vertical {
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ==========================================
+   SWAP BUTTON
+   ========================================== */
+.swap-button {
+  margin-top: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(50px) saturate(180%) brightness(1.1);
+  -webkit-backdrop-filter: blur(50px) saturate(180%) brightness(1.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: white;
+  font-size: 14px;
+  transition: transform 150ms ease;
+  animation: swapFadeIn 300ms ease-out both;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.swap-button:active {
+  transform: scale(0.85);
+}
+
+@keyframes swapFadeIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
