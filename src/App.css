@@ -1,6 +1,14 @@
 /* ==========================================
    MOBILE CONTAINER
    ========================================== */
+:root {
+  --ease-fluid: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-soft-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --glass-fill: rgba(255, 255, 255, 0.1);
+  --glass-stroke: rgba(255, 255, 255, 0.2);
+  --glass-blur: 5px;
+}
+
 .mobile-container {
   width: 390px;
   height: 844px;
@@ -31,17 +39,18 @@
    ICON BUTTONS
    ========================================== */
 .nav-icon-button {
-  background: none;
+  background: transparent;
   border: none;
   padding: 0;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 100ms ease, opacity 200ms ease;
-  opacity: 0.55;
-  width: 30px;
-  height: 30px;
+  transition: transform 0.2s var(--ease-soft-out), background-color 0.2s var(--ease-soft-out), box-shadow 0.2s var(--ease-soft-out);
+  opacity: 0.85;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   -webkit-tap-highlight-color: transparent;
   outline: none;
 }
@@ -49,22 +58,25 @@
 .nav-icon-button svg {
   width: 24px;
   height: 24px;
-  fill: white;
-  color: white;
-  transition: all 200ms ease;
+  fill: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.85);
+  transition: transform 0.2s var(--ease-soft-out), opacity 0.2s var(--ease-soft-out);
 }
 
 .nav-icon-button.active {
   opacity: 1;
-  transform: scale(1.12);
+  background: rgba(255, 255, 255, 0.16);
+  transform: scale(1.08);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.24);
 }
 
-.nav-icon-button.active svg {
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
+.nav-icon-button:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.07);
 }
 
 .nav-icon-button:active {
-  transform: scale(0.85);
+  transform: scale(0.96);
 }
 
 /* ==========================================
@@ -91,49 +103,34 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  animation: navEntrance 500ms ease-out 200ms both;
-}
-
-@keyframes navEntrance {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* ==========================================
-   DOCK POSITIONS
-   (Use left+right+margin:auto instead of 
-    translateX(-50%) to avoid transform)
-   ========================================== */
-.fluid-nav--bottom {
-  bottom: 40px;
-  left: 0;
-  right: 0;
-  margin-left: auto;
-  margin-right: auto;
+  transform-origin: center center;
   width: fit-content;
+  height: fit-content;
 }
 
-.fluid-nav--left {
-  left: 16px;
-  bottom: 120px;
-}
-
-.fluid-nav--right {
-  right: 16px;
-  bottom: 120px;
+.capsule-layer {
+  position: relative;
+  width: fit-content;
+  height: fit-content;
 }
 
 /* ==========================================
    INTERACTION STATES
    ========================================== */
 .fluid-nav--activated .glass-pill {
-  box-shadow: 
-    0 0 40px rgba(255, 255, 255, 0.2),
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.fluid-nav--dragging .glass-pill {
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 /* ==========================================
@@ -141,25 +138,55 @@
    ========================================== */
 .glass-pill {
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(50px) saturate(180%) brightness(1.1);
-  -webkit-backdrop-filter: blur(50px) saturate(180%) brightness(1.1);
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  background: linear-gradient(
+    152deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.1) 44%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  backdrop-filter: blur(var(--glass-blur)) saturate(100%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(100%);
+  border: 1px solid var(--glass-stroke);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 1px 0 0 rgba(255, 255, 255, 0.08),
+    inset -1px 0 0 rgba(255, 255, 255, 0.05);
+  transition: width 0.42s var(--ease-fluid), height 0.42s var(--ease-fluid), border-radius 0.42s var(--ease-fluid), padding 0.42s var(--ease-fluid), transform 0.24s var(--ease-soft-out), box-shadow 0.24s var(--ease-soft-out), opacity 0.2s var(--ease-soft-out);
+  position: relative;
+  overflow: hidden;
+  transform-origin: center center;
+}
+
+.glass-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.16) 28%, rgba(255, 255, 255, 0.05) 100%) border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 /* Horizontal pill (bottom) */
 .glass-pill--horizontal {
-  padding: 14px 28px;
+  padding: 10px 16px;
+  min-height: 56px;
 }
 
 /* Vertical pill (left/right) */
 .glass-pill--vertical {
-  padding: 18px 14px;
+  padding: 14px 10px;
+  min-width: 56px;
 }
 
 /* ==========================================
@@ -168,11 +195,13 @@
 .glass-pill__icons {
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s var(--ease-soft-out), transform 0.2s var(--ease-soft-out);
 }
 
 .glass-pill__icons--horizontal {
   flex-direction: row;
-  gap: 28px;
+  gap: 18px;
 }
 
 .glass-pill__icons--vertical {
@@ -180,35 +209,125 @@
   gap: 20px;
 }
 
+.glass-pill--dragging {
+  width: 66px;
+  height: 66px;
+  min-width: 66px;
+  min-height: 66px;
+  padding: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+
+.glass-pill__icons--dragging {
+  position: relative;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-icon-button--drag {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  transition: opacity 0.2s var(--ease-soft-out), transform 0.2s var(--ease-soft-out);
+}
+
+.nav-icon-button--drag.active {
+  background: transparent;
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.drag-active-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 0.2s var(--ease-soft-out), transform 0.2s var(--ease-soft-out);
+}
+
+.drag-active-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.88);
+}
+
 /* ==========================================
    SWAP BUTTON
    ========================================== */
 .swap-button {
-  margin-top: 14px;
-  width: 38px;
-  height: 38px;
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 14px);
+  margin-top: 0;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(50px) saturate(180%) brightness(1.1);
-  -webkit-backdrop-filter: blur(50px) saturate(180%) brightness(1.1);
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  backdrop-filter: blur(15px) saturate(100%);
+  -webkit-backdrop-filter: blur(15px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  color: white;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
-  transition: transform 150ms ease;
-  animation: swapFadeIn 300ms ease-out both;
+  transform: translateX(-50%) scale(1);
+  transition: none;
   -webkit-tap-highlight-color: transparent;
 }
 
+.swap-button span {
+  line-height: 1;
+  transform: translateY(-0.5px) rotate(0deg);
+  transition: transform 0.2s var(--ease-soft-out);
+}
+
 .swap-button:active {
-  transform: scale(0.85);
+  transform: translateX(-50%) scale(0.94);
+}
+
+.swap-button--point-right span {
+  transform: translateY(-0.5px) rotate(180deg);
+}
+
+.swap-button--visible {
+  opacity: 1;
+  display: flex;
+  pointer-events: auto;
+  transition: transform 0.2s var(--ease-soft-out), opacity 0.2s var(--ease-soft-out);
+}
+
+.swap-button--hidden {
+  opacity: 0;
+  display: none;
+  transform: translateX(-50%) scale(0.95);
+  pointer-events: none;
+  transition: none;
 }
 
 @keyframes swapFadeIn {
-  from { opacity: 0; transform: scale(0.7); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateX(-50%) scale(0.94); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
 }

@@ -20,16 +20,11 @@ const DRAG_THRESHOLD = 5;
 const MAG_LEFT = 110;
 const MAG_RIGHT = W - 110;
 
-const DOCK_CENTER = {
-  bottom: { x: W / 2, y: H - 60 },
-  left:   { x: 44,    y: H - 260 },
-  right:  { x: W - 44, y: H - 260 },
-};
-
 export default function FluidNav({ activeTab, setActiveTab }) {
   const [dock, setDock] = useState('bottom');
   const [phase, setPhase] = useState('idle');
   const [dragPos, setDragPos] = useState(null);
+  const [arrowVisible, setArrowVisible] = useState(false);
 
   const wrapperRef = useRef(null);
   const navRef = useRef(null);
@@ -38,6 +33,12 @@ export default function FluidNav({ activeTab, setActiveTab }) {
   const grabOffset = useRef({ x: 0, y: 0 });
   const didDrag = useRef(false);
   const currentPos = useRef({ x: 0, y: 0 });
+  const arrowTimer = useRef(null);
+  const navDimensions = useRef({
+    horizontal: { w: 216, h: 56 },
+    vertical: { w: 56, h: 232 },
+  });
+  const [, setDimsVersion] = useState(0);
 
   const spring = useSpringPhysics(
     useCallback((pos) => {
@@ -54,6 +55,19 @@ export default function FluidNav({ activeTab, setActiveTab }) {
     const r = getRect();
     return { x: cx - r.left, y: cy - r.top };
   }, [getRect]);
+
+  const computeDockCenter = useCallback((dockName) => {
+    const mode = dockName === 'bottom' ? 'horizontal' : 'vertical';
+    const { w, h } = navDimensions.current[mode];
+
+    if (dockName === 'bottom') {
+      return { x: W / 2, y: H - 40 - h / 2 };
+    }
+    if (dockName === 'left') {
+      return { x: 16 + w / 2, y: H - 120 - h / 2 };
+    }
+    return { x: W - 16 - w / 2, y: H - 120 - h / 2 };
+  }, []);
 
   /* ---- Pointer handlers ---- */
   const onPointerDown = useCallback((e) => {
@@ -121,18 +135,18 @@ export default function FluidNav({ activeTab, setActiveTab }) {
       else if (pos.x > MAG_RIGHT) target = 'right';
 
       setPhase('snapping');
-      const dp = DOCK_CENTER[target];
+      const dp = computeDockCenter(target);
       setDragPos({ x: dp.x, y: dp.y, snapping: true });
 
       setTimeout(() => {
         setDock(target);
         setDragPos(null);
         setPhase('idle');
-      }, 450);
+      }, 500);
     } else {
       setPhase('idle');
     }
-  }, [phase, spring]);
+  }, [phase, spring, computeDockCenter]);
 
   /* ---- Swap handler ---- */
   const handleSwap = useCallback((e) => {
@@ -152,7 +166,7 @@ export default function FluidNav({ activeTab, setActiveTab }) {
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const dp = DOCK_CENTER[target];
+        const dp = computeDockCenter(target);
         setDragPos({ x: dp.x, y: dp.y, snapping: true });
         setTimeout(() => {
           setDock(target);
@@ -161,11 +175,13 @@ export default function FluidNav({ activeTab, setActiveTab }) {
         }, 550);
       });
     });
-  }, [dock, phase, getRect]);
+  }, [dock, phase, getRect, computeDockCenter]);
 
   /* ---- Render logic ---- */
   const isVertical = dock !== 'bottom';
-  const showSwap = dock !== 'bottom' && phase === 'idle' && !dragPos;
+  const isDragging = phase === 'dragging';
+  const forceHideSwap = isDragging || phase === 'activated' || phase === 'snapping';
+  const showSwap = !forceHideSwap && dock !== 'bottom' && phase === 'idle' && !dragPos && arrowVisible;
 
   // While dragging, determine shape based on position
   const dragVertical = dragPos && (dragPos.x < MAG_LEFT || dragPos.x > MAG_RIGHT);
@@ -178,16 +194,78 @@ export default function FluidNav({ activeTab, setActiveTab }) {
       position: 'absolute',
       left: `${dragPos.x}px`,
       top: `${dragPos.y}px`,
-      transform: `translate(-50%, -50%) ${phase === 'dragging' ? 'scale(1.03)' : ''}`,
+      transform: `translate(-50%, -50%) ${phase === 'dragging' ? 'scale(1.05)' : ''}`,
       transition: dragPos.snapping
-        ? 'left 400ms cubic-bezier(0.34, 1.56, 0.64, 1), top 400ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 200ms ease'
+        ? 'left 460ms cubic-bezier(0.22, 1.2, 0.32, 1), top 460ms cubic-bezier(0.22, 1.2, 0.32, 1), transform 240ms ease-out'
         : 'none',
       zIndex: 200,
+      willChange: phase === 'dragging' ? 'transform' : 'auto',
     };
   }
 
-  const dockClass = !dragPos ? `fluid-nav--${dock}` : '';
   const stateClass = phase === 'activated' ? 'fluid-nav--activated' : '';
+  const dragClass = phase === 'dragging' ? 'fluid-nav--dragging' : '';
+  const phaseClass = `fluid-nav--phase-${phase}`;
+  const ActiveIcon = tabs[activeTab].Icon;
+
+  useEffect(() => {
+    if (arrowTimer.current) {
+      clearTimeout(arrowTimer.current);
+      arrowTimer.current = null;
+    }
+
+    if (dock !== 'bottom' && phase === 'idle' && !dragPos) {
+      arrowTimer.current = setTimeout(() => {
+        setArrowVisible(true);
+      }, 120);
+    } else {
+      setArrowVisible(false);
+      if (arrowTimer.current) {
+        clearTimeout(arrowTimer.current);
+        arrowTimer.current = null;
+      }
+    }
+
+    return () => {
+      if (arrowTimer.current) {
+        clearTimeout(arrowTimer.current);
+        arrowTimer.current = null;
+      }
+    };
+  }, [dock, phase, dragPos]);
+
+  useEffect(() => {
+    if (!navRef.current) return undefined;
+
+    const observer = new ResizeObserver((entries) => {
+      if (!entries.length) return;
+      if (phase !== 'idle' || dragPos) return;
+
+      const rect = entries[0].contentRect;
+      const mode = dock === 'bottom' ? 'horizontal' : 'vertical';
+      const prev = navDimensions.current[mode];
+      const nextW = Math.round(rect.width);
+      const nextH = Math.round(rect.height);
+
+      if (prev.w !== nextW || prev.h !== nextH) {
+        navDimensions.current[mode] = { w: nextW, h: nextH };
+        setDimsVersion((v) => v + 1);
+      }
+    });
+
+    observer.observe(navRef.current);
+    return () => observer.disconnect();
+  }, [dock, phase, dragPos]);
+
+  const dockCenter = computeDockCenter(dock);
+  const restingStyle = {
+    position: 'absolute',
+    left: `${dockCenter.x}px`,
+    top: `${dockCenter.y}px`,
+    transform: 'translate(-50%, -50%)',
+    zIndex: 200,
+    willChange: 'auto',
+  };
 
   return (
     <div
@@ -201,34 +279,42 @@ export default function FluidNav({ activeTab, setActiveTab }) {
     >
       <div
         ref={navRef}
-        className={`fluid-nav ${dockClass} ${stateClass}`}
-        style={dragPos ? navStyle : undefined}
+        className={`fluid-nav ${stateClass} ${dragClass} ${phaseClass}`}
+        style={dragPos ? navStyle : restingStyle}
       >
-        {/* Glass pill */}
-        <div className={`glass-pill ${renderVertical ? 'glass-pill--vertical' : 'glass-pill--horizontal'}`}>
-          <div className={`glass-pill__icons ${renderVertical ? 'glass-pill__icons--vertical' : 'glass-pill__icons--horizontal'}`}>
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`nav-icon-button ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => { if (!didDrag.current) setActiveTab(tab.id); }}
-              >
-                <tab.Icon />
-              </button>
-            ))}
+        <div className="capsule-layer">
+          {/* Glass pill */}
+          <div className={`glass-pill ${renderVertical ? 'glass-pill--vertical' : 'glass-pill--horizontal'} ${isDragging ? 'glass-pill--dragging' : ''}`}>
+            <div className={`glass-pill__icons ${renderVertical ? 'glass-pill__icons--vertical' : 'glass-pill__icons--horizontal'} ${isDragging ? 'glass-pill__icons--dragging' : ''}`}>
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`nav-icon-button ${activeTab === tab.id ? 'active' : ''} ${isDragging ? 'nav-icon-button--drag' : ''}`}
+                  onClick={() => { if (!didDrag.current) setActiveTab(tab.id); }}
+                  style={{ '--icon-order': tab.id }}
+                >
+                  <tab.Icon />
+                </button>
+              ))}
+              {isDragging && (
+                <div className="drag-active-icon">
+                  <ActiveIcon />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Swap arrow */}
-        {showSwap && (
-          <div
-            className="swap-button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={handleSwap}
-          >
-            <span>{dock === 'left' ? '▶' : '◀'}</span>
-          </div>
-        )}
+        {/* Swap arrow overlay layer (separate from capsule sizing) */}
+        <button
+          className={`swap-button ${showSwap ? 'swap-button--visible' : 'swap-button--hidden'} ${dock === 'left' ? 'swap-button--point-right' : 'swap-button--point-left'}`}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={handleSwap}
+          tabIndex={showSwap ? 0 : -1}
+          aria-hidden={!showSwap}
+        >
+          <span>◀</span>
+        </button>
       </div>
     </div>
   );
